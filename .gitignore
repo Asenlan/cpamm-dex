@@ -1,0 +1,6 @@
+target/
+node_modules/
+.anchor/
+**/*.rs.bk
+.env
+.DS_Store

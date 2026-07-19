@@ -1,5 +1,9 @@
 # CPAMM DEX
 
+[中文](README_CN.md) | [English](README.md)
+
+---
+
 Constant-Product Automated Market Maker on Solana. Uniswap V2-style x\*y=k invariant with 0.3% fee, LP tokens, and slippage protection. Built with Anchor.
 
 ## Features

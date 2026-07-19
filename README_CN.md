@@ -1,3 +1,7 @@
+[English](README.md) | [中文](README_CN.md)
+
+---
+
 # CPAMM DEX
 
 Solana 链上恒定乘积自动做市商（AMM）。Uniswap V2 风格的 x\*y=k 不变式，含 0.3% 手续费、LP 代币和滑点保护。Anchor 实现。

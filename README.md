@@ -1,84 +1,61 @@
 # CPAMM DEX
 
-Solana 链上恒定乘积自动做市商（AMM）。Uniswap V2 风格的 x\*y=k 不变式，含 0.3% 手续费、LP 代币和滑点保护。Anchor 实现。
+Constant-Product Automated Market Maker on Solana. Uniswap V2-style x\*y=k invariant with 0.3% fee, LP tokens, and slippage protection. Built with Anchor.
 
-## 功能
+## Features
 
-- **恒定乘积不变式** — `reserve_a * reserve_b = k`
-- **0.3% 交易手续费** — 留在池子中，按份额归 LP 持有者
-- **LP 代币** — 流动性提供者获得池子份额的凭证
-- **滑点保护** — 交易 `min_amount_out`，添加流动性 `min_lp_out`
-- **排序代币地址** — 无论传入顺序如何，池子 PDA 地址确定唯一
-- **PDA 金库** — 两种代币储备由程序派生地址托管
+- **Constant-product invariant** — `reserve_a * reserve_b = k`
+- **0.3% swap fee** — Stays in pool, accrues to liquidity providers
+- **LP tokens** — Proportional share of pool reserves, minted on deposit
+- **Slippage protection** — `min_amount_out` for swaps, `min_lp_out` for liquidity
+- **Sorted mint derivation** — Deterministic pool PDA regardless of token order
+- **PDA vaults** — Both token reserves held in program-derived accounts
 
-## 交易数学
+## Swap Math
 
 ```
-手续费 = 输入量 × 费率分子 / 费率分母
-有效输入 = 输入量 - 手续费
-输出量 = (有效输入 × 输出储备) / (输入储备 + 有效输入)
+fee = amount_in * fee_num / fee_denom
+effective_in = amount_in - fee
+amount_out = (effective_in * reserve_out) / (reserve_in + effective_in)
 ```
 
-0.3% 费率下：`输出量 = (输入量 × 997 × 输出储备) / (输入储备 × 1000 + 输入量 × 997)`
+With 0.3% fee: `amount_out = (amount_in * 997 * reserve_out) / (reserve_in * 1000 + amount_in * 997)`
 
-所有计算使用 u128 中间类型，无溢出风险。
+All computation uses u128 intermediates — no overflow risk.
 
-## LP 数学
+## LP Math
 
-**首个提供者：** `lp数量 = sqrt(代币A × 代币B)`
+**First provider:** `lp_tokens = sqrt(amount_a * amount_b)`
 
-**后续提供：** `lp数量 = min(添加A/储备A, 添加B/储备B) × 总供应量`
+**Subsequent:** `lp_tokens = min(amount_a/reserve_a, amount_b/reserve_b) * total_supply`
 
-**提取：** `提取量 = lp销毁量 × 储备量 / 总供应量`
+**Withdrawal:** `amount = lp_amount * reserve / total_supply`
 
-## 指令
+## Instructions
 
-| 指令 | 调用者 | 说明 |
-|------|--------|------|
-| `initialize_pool` | 任何人 | 创建池子，存入初始流动性，铸造 LP |
-| `swap` | 任何人 | A→B 或 B→A 兑换 |
-| `add_liquidity` | LP | 按比例存入代币，铸造 LP 份额 |
-| `remove_liquidity` | LP | 销毁 LP 份额，提取代币 |
+| Instruction | Caller | Description |
+|---|---|---|
+| `initialize_pool` | Anyone | Create pool, deposit initial liquidity, mint LP |
+| `swap` | Anyone | Swap A→B or B→A |
+| `add_liquidity` | LP | Deposit tokens in ratio, mint LP shares |
+| `remove_liquidity` | LP | Burn LP shares, withdraw tokens |
 
-## PDA 派生
+## PDA Derivation
 
-| 账户 | 种子 |
-|------|------|
+| Account | Seeds |
+|---------|-------|
 | Pool | `[b"pool", mint_low, mint_high]` |
 | Vault A | `[b"vault-a", pool]` |
 | Vault B | `[b"vault-b", pool]` |
 | LP Mint | `[b"lp-mint", pool]` |
 
-## 项目结构
-
-```
-programs/cpamm/src/
-├── lib.rs                  # 入口 + IDL 分发
-├── state.rs                # Pool 账户 + AMM 数学（12 个单元测试）
-├── errors.rs               # 自定义错误
-└── instructions/
-    ├── initialize.rs       # 创建池子
-    ├── swap.rs             # x*y=k 兑换
-    ├── add_liquidity.rs    # 铸造 LP
-    └── remove_liquidity.rs # 销毁 LP
-tests/
-└── cpamm.ts                # 5 个集成测试
-```
-
-## 技术栈
-
-- **Anchor 0.30** — Solana 开发框架
-- **SPL Token** — 代币标准
-- **Rust** — 合约语言
-- **TypeScript** — 测试
-
-## 快速开始
+## Quick Start
 
 ```bash
 anchor build
 anchor test
 ```
 
-## 许可
+## License
 
 MIT
